@@ -68,6 +68,8 @@ class Game:
         self.is_mouse_inside_exit = False
         self.is_mouse_inside_resume = False
         self.is_mouse_inside_new_game = False
+        self.is_mouse_inside_save_game = False
+        self.is_mouse_inside_load_game = False
 
         self.main_loop()
 
@@ -75,12 +77,20 @@ class Game:
     def pause_game(self):
         self.is_game_paused = True
 
-    def is_mouse_inside(self, mouse_pos, object_pos, object_size_x=40, object_size_y=30):
+    def is_mouse_inside(
+        self, mouse_pos, object_pos, object_size_x=40, object_size_y=30
+    ):
 
         is_mouse_inside = False
 
-        if mouse_pos[0] < object_pos[0] + object_size_x and mouse_pos[0] > object_pos[0] - object_size_x:
-            if mouse_pos[1] < object_pos[1] + object_size_y and mouse_pos[1] > object_pos[1] - object_size_y:
+        if (
+            mouse_pos[0] < object_pos[0] + object_size_x
+            and mouse_pos[0] > object_pos[0] - object_size_x
+        ):
+            if (
+                mouse_pos[1] < object_pos[1] + object_size_y
+                and mouse_pos[1] > object_pos[1] - object_size_y
+            ):
                 is_mouse_inside = True
 
         return is_mouse_inside
@@ -88,13 +98,15 @@ class Game:
     def display_options_loop(self):
         mouse_pos = self.mouse_pos
 
-        screen_pos_adition_y = SCREEN_MIDDLE[1]/4.5
+        screen_pos_adition_y = SCREEN_MIDDLE[1] / 4.5
 
         font = pygame.font.SysFont("copperplate gothic", 40)
 
         exit_surface = font.render("Exit", True, RED)
-        exit_button_pos = (SCREEN_MIDDLE[0],
-                            SCREEN_MIDDLE[1] + (screen_pos_adition_y * 8))
+        exit_button_pos = (
+            SCREEN_MIDDLE[0],
+            SCREEN_MIDDLE[1] + (screen_pos_adition_y * 8),
+        )
 
         self.is_mouse_inside_exit = self.is_mouse_inside(mouse_pos, exit_button_pos)
         if self.is_mouse_inside_exit:
@@ -106,12 +118,14 @@ class Game:
 
         if not self.is_game_over:
             resume_surface = font.render("Resume", True, RED)
-            resume_button_pos = (SCREEN_MIDDLE[0],
-                                SCREEN_MIDDLE[1] + (screen_pos_adition_y * 2))
+            resume_button_pos = (
+                SCREEN_MIDDLE[0],
+                SCREEN_MIDDLE[1] + (screen_pos_adition_y * 2),
+            )
 
-            self.is_mouse_inside_resume = self.is_mouse_inside(mouse_pos,
-                                                               resume_button_pos,
-                                                               object_size_x=80)
+            self.is_mouse_inside_resume = self.is_mouse_inside(
+                mouse_pos, resume_button_pos, object_size_x=80
+            )
             if self.is_mouse_inside_resume:
                 resume_surface = font.render("Resume", True, WHITE)
 
@@ -121,18 +135,52 @@ class Game:
 
         if self.is_game_over:
             new_game_surface = font.render("New Game", True, RED)
-            new_game_button_pos = (SCREEN_MIDDLE[0],
-                                SCREEN_MIDDLE[1] + (screen_pos_adition_y * 2))
+            new_game_button_pos = (
+                SCREEN_MIDDLE[0],
+                SCREEN_MIDDLE[1] + (screen_pos_adition_y * 2),
+            )
 
-            self.is_mouse_inside_new_game = self.is_mouse_inside(mouse_pos,
-                                                               new_game_button_pos,
-                                                               object_size_x=100)
+            self.is_mouse_inside_new_game = self.is_mouse_inside(
+                mouse_pos, new_game_button_pos, object_size_x=100
+            )
             if self.is_mouse_inside_new_game:
                 new_game_surface = font.render("New Game", True, WHITE)
 
             new_game_rect = new_game_surface.get_rect()
             new_game_rect.midtop = new_game_button_pos
             self.screen.blit(new_game_surface, new_game_rect)
+
+        save_game_surface = font.render("Save", True, RED)
+        save_game_button_pos = (
+            SCREEN_MIDDLE[0],
+            SCREEN_MIDDLE[1] + (screen_pos_adition_y * 4),
+        )
+
+        self.is_mouse_inside_save_game = self.is_mouse_inside(
+            mouse_pos, save_game_button_pos, object_size_x=50
+        )
+        if self.is_mouse_inside_save_game:
+            save_game_surface = font.render("Save", True, WHITE)
+
+        save_game_rect = save_game_surface.get_rect()
+        save_game_rect.midtop = save_game_button_pos
+        self.screen.blit(save_game_surface, save_game_rect)
+
+        load_game_surface = font.render("Load", True, RED)
+        load_game_button_pos = (
+            SCREEN_MIDDLE[0],
+            SCREEN_MIDDLE[1] + (screen_pos_adition_y * 6),
+        )
+
+        self.is_mouse_inside_load_game = self.is_mouse_inside(
+            mouse_pos, load_game_button_pos, object_size_x=50
+        )
+        if self.is_mouse_inside_load_game:
+            load_game_surface = font.render("Load", True, WHITE)
+
+        load_game_rect = load_game_surface.get_rect()
+        load_game_rect.midtop = load_game_button_pos
+        self.screen.blit(load_game_surface, load_game_rect)
 
     # Game Over
     def on_game_over(self):
@@ -168,7 +216,34 @@ class Game:
 
         self.is_game_over = False
         self.is_game_paused = False
-        self.is_mouse_inside_new_game = False
+
+    def save_game(self):
+        save_dict = {
+            "game_score": self.game_score,
+            "fruit_position": self.fruit_position,
+            "snake_position": self.snake_position,
+            "snake_direction": self.snake_direction
+        }
+
+        with open('save_game.json', 'w') as f:
+            json.dump(save_dict, f)
+
+    def load_game(self):
+        save_dict = None
+
+        with open('save_game.json', 'r') as f:
+            try:
+                save_dict = json.load(f)
+            except Exception:
+                save_dict = None
+        
+        if save_dict is not None:
+            self.game_score = save_dict["game_score"]
+            self.fruit_position = save_dict["fruit_position"]
+            self.snake_position = save_dict["snake_position"]
+            self.snake_direction = save_dict["snake_direction"]
+            self.is_game_over = False
+            self.is_game_paused = False
 
     def on_mouse_click_event(self, event):
         if self.is_game_paused:
@@ -178,6 +253,17 @@ class Game:
                 self.is_game_paused = False
             if self.is_mouse_inside_new_game:
                 self.start_new_game()
+            if self.is_mouse_inside_save_game:
+                self.save_game()
+            if self.is_mouse_inside_load_game:
+                self.load_game()
+
+        # Reset mouse inside buttons
+        self.is_mouse_inside_exit = False
+        self.is_mouse_inside_resume = False
+        self.is_mouse_inside_new_game = False
+        self.is_mouse_inside_save_game = False
+        self.is_mouse_inside_load_game = False
 
     def on_key_event(self, event):
 
