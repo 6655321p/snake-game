@@ -1,7 +1,7 @@
 # Import libraries
 import pygame
-import time
 import random
+import json
 
 from screeninfo import get_monitors
 
@@ -67,6 +67,7 @@ class Game:
         # Mouse inside buttons
         self.is_mouse_inside_exit = False
         self.is_mouse_inside_resume = False
+        self.is_mouse_inside_new_game = False
 
         self.main_loop()
 
@@ -118,6 +119,21 @@ class Game:
             resume_rect.midtop = resume_button_pos
             self.screen.blit(resume_surface, resume_rect)
 
+        if self.is_game_over:
+            new_game_surface = font.render("New Game", True, RED)
+            new_game_button_pos = (SCREEN_MIDDLE[0],
+                                SCREEN_MIDDLE[1] + (screen_pos_adition_y * 2))
+
+            self.is_mouse_inside_new_game = self.is_mouse_inside(mouse_pos,
+                                                               new_game_button_pos,
+                                                               object_size_x=100)
+            if self.is_mouse_inside_new_game:
+                new_game_surface = font.render("New Game", True, WHITE)
+
+            new_game_rect = new_game_surface.get_rect()
+            new_game_rect.midtop = new_game_button_pos
+            self.screen.blit(new_game_surface, new_game_rect)
+
     # Game Over
     def on_game_over(self):
         self.is_game_over = True
@@ -130,12 +146,38 @@ class Game:
         self.screen.blit(game_over_surface, game_over_rect)
         self.pause_game()
 
+    def start_new_game(self):
+
+        # Snake position and body
+        self.snake_position = [100, 50]
+        self.snake_body = [[100, 50], [90, 50], [80, 50], [70, 50]]
+        self.is_game_over = False
+
+        # Fruit position
+        self.fruit_position = [
+            random.randrange(1, (SCREEN_WIDTH // 10)) * 10,
+            random.randrange(1, (SCREEN_HEIGHT // 10)) * 10,
+        ]
+
+        # Directions
+        self.snake_direction = "RIGHT"
+        self.change_snake_direction_to = self.snake_direction
+
+        # Score
+        self.game_score = 0
+
+        self.is_game_over = False
+        self.is_game_paused = False
+        self.is_mouse_inside_new_game = False
+
     def on_mouse_click_event(self, event):
         if self.is_game_paused:
             if self.is_mouse_inside_exit:
                 exit()
             if self.is_mouse_inside_resume:
                 self.is_game_paused = False
+            if self.is_mouse_inside_new_game:
+                self.start_new_game()
 
     def on_key_event(self, event):
 
